@@ -6,11 +6,25 @@
 	of pulses from a flow meter.
 
 	Handling three flow meter pulse inputs
+	and publish values via MQTT to Domoticz
 
 """
 
 import RPi.GPIO as GPIO, sqlite3 as sqlite, time, os
+import paho.mqtt.client as mqtt
 
+# Debug flag for printing, 0: false, 1: true
+Debug = 1
+
+# Configuration for MQTT broker and Domoticz
+broker_address="localhost"
+# The device indexes are assigned by Domoticz and must be changed here
+idx1 = 4
+idx2 = 5
+idx3 = 6
+
+# The flow meter pulse counters
+# there will be 450 pulses for each liter of water
 pulsecounter1 = 0
 pulsecounter2 = 0
 pulsecounter3 = 0
@@ -77,8 +91,8 @@ def InitCurrCounters(db_file, timestamp):
                 dbdata.execute("INSERT INTO Lwcounters VALUES(?, ?, ?, ?, ?)", (1, timestamp, 0, 0, 0))
 		dbconn.commit()
 	except sqlite.Error,e:
-		print e
-                print("Opening existing database: {0}".format(db_file))
+#                print e
+#                print("Opening existing database: {0}".format(db_file))
 		if dbconn:
 			dbconn.rollback()
 	finally:
@@ -104,17 +118,17 @@ def GetCurrCounters(db_file):
 
 def pulse1_callback(pin):
         global pulsecounter1
-        print("pulse on pin: {0}".format(pin))
+#        print("pulse on pin: {0}".format(pin))
         pulsecounter1+=1
 
 def pulse2_callback(pin):
         global pulsecounter2
-        print("pulse on pin: {0}".format(pin))
+#        print("pulse on pin: {0}".format(pin))
         pulsecounter2+=1
 
 def pulse3_callback(pin):
         global pulsecounter3
-        print("pulse on pin: {0}".format(pin))
+#        print("pulse on pin: {0}".format(pin))
         pulsecounter3+=1
 
 def main():
@@ -166,13 +180,45 @@ def main():
 
     GetCurrCounters(database)
 
+    # Connect to the MQTT broker
+    client = mqtt.Client("Wcnt1") # create new instance
+    client.connect(broker_address) # connect to broker
+
     while True:
-#        print("Water: 1: {0} pulses, 2: {1} pulses, 3: {2} pulses".format(pulsecounter1, pulsecounter2, pulsecounter2))
+        # Update SQLite database with counter values
+        print("Water: 1: {0} pulses, 2: {1} pulses, 3: {2} pulses".format(pulsecounter1, pulsecounter2, pulsecounter3))
         timenow = int(time.time())
         InsertCounters(database, timenow, pulsecounter1, pulsecounter2, pulsecounter3)
         timenow = int(time.time())
         UpdateCurrCounters(database, timenow, pulsecounter1, pulsecounter2, pulsecounter3)
+
+        # Publish the liter values to Domoticz
+        wliter1 = int(pulsecounter1/450)
+        wliter2 = int(pulsecounter2/450)
+        wliter3 = int(pulsecounter3/450)
+        print("Water: 1: {0} L, 2: {1} L, 3: {2} L".format(wliter1, wliter2, wliter3))
+        # Format and publish first water meter
+        mqttbuffer = "{ \"idx\" : %d, \"nvalue\" : 0, \"svalue\" : \"%d\" }" % (idx1, wliter1)
+        if Debug == 1:
+            print(mqttbuffer)
+        client.publish("domoticz/in", mqttbuffer)
+        time.sleep(1) # wait a while between messages
+
+        # Format and publish second counter
+        mqttbuffer = "{ \"idx\" : %d, \"nvalue\" : 0, \"svalue\" : \"%d\" }" % (idx2, wliter2)
+        if Debug == 1:
+            print(mqttbuffer)
+        client.publish("domoticz/in", mqttbuffer)
+        time.sleep(1) # wait a while between messages
+
+        # Format and publish third counter
+        mqttbuffer = "{ \"idx\" : %d, \"nvalue\" : 0, \"svalue\" : \"%d\" }" % (idx3, wliter3)
+        if Debug == 1:
+            print(mqttbuffer)
+        client.publish("domoticz/in", mqttbuffer)
+
+        # Wait a while before next update
         time.sleep(20)
-    
+
 if __name__ == '__main__':
     main()
