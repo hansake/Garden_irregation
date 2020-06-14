@@ -14,3 +14,6 @@ For the NodeMCU the SSID and WiFi passphrase must also be configured.
 
 MQTT is used to send measurements to Domoticz.
 The Mosquitto MQTT broker is installed on the Raspberry Pi.
+
+To the RPi there is connected a small OLED display that shows time and water consumption.
+A Python script updates the display.
