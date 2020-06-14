@@ -17,3 +17,8 @@ The Mosquitto MQTT broker is installed on the Raspberry Pi.
 
 To the RPi there is connected a small OLED display that shows time and water consumption.
 A Python script updates the display.
+
+Devices must be created in Domoticz to control the solenoids via the GPIO pins.
+Virtual devices must also be created to be updated by MQTT messages.
+See some of my other related projects how to do this (info. will eventually be put here also).
+README.md
