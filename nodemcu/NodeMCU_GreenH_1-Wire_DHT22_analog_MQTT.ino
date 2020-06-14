@@ -23,8 +23,8 @@ DallasTemperature sensors(&oneWire);
 DHTesp dht;
 
 // WiFi configuration
-const char* ssid = "CAMELOT2";
-const char* password = "37sig&n%";
+const char* ssid = "<your SSID>";
+const char* password = "<your WiFi password>";
 int wifitries = 0;
 int connstatus;
 
