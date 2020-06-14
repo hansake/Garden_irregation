@@ -1,9 +1,30 @@
+/*  NodeMCU with 1-Wire, DHT22 (RHT03) and analog
+ *  moisture interfaces and MQTT output
+ *  Tests for the greenhouse sensors
+ */
+#include <ESP8266WiFi.h>
+#include <PubSubClient.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <DHTesp.h>
+
+// 1-Wire is plugged into port 5 on the Arduino, D1 on NodeMCU
+#define ONE_WIRE_BUS 5
+// DHT22 is plugged into port 4 on the Arduino, D2 on NodeMCU
+#define DHT22_BUS 4
+
+// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
+OneWire oneWire(ONE_WIRE_BUS);
+
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature sensors(&oneWire);
+
 // DHT22 device
 DHTesp dht;
 
 // WiFi configuration
-const char* ssid = "<your SSID>";
-const char* password = "<your password>";
+const char* ssid = "CAMELOT2";
+const char* password = "37sig&n%";
 int wifitries = 0;
 int connstatus;
 
